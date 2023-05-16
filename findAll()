@@ -1,0 +1,49 @@
+@Override
+	public List<Departamento> findAll() {
+		List<Departamento> departamentos = new ArrayList<>();
+
+		Departamento departamento = null;
+		try (Collection col = DatabaseManager.getCollection(
+				dataSource.getUrl() + dataSource.getColeccionDepartamentos(), dataSource.getUser(),
+				dataSource.getPwd())) {
+
+			XQueryService xqs = (XQueryService) col.getService("XQueryService", "1.0");
+			xqs.setProperty("indent", "yes");
+
+			CompiledExpression compiled = xqs
+					.compile("for $dept in doc(\"departamentos.xml\")//DEP_ROW return $dept");
+			ResourceSet dept = xqs.execute(compiled);
+			
+			if (dept.getSize() == 0)
+				//throw new InstanceNotFoundException(id, Departamento.class.getName());
+				
+				System.out.println("La lista está vacía");
+
+			ResourceIterator i = dept.getIterator();
+			Resource res = null;
+			while (i.hasMoreResources()) {
+				try {
+					res = i.nextResource();
+					String nodeString = res.getContent().toString();
+					departamento = stringNodeToDepartamento(nodeString);
+	                departamentos.add(departamento);
+
+				} finally {
+					// dont forget to cleanup resources
+					try {
+						((EXistResource) res).freeResources();
+					} catch (XMLDBException xe) {
+						departamento = null;
+						xe.printStackTrace();
+					}
+				}
+			}
+
+		} catch (XMLDBException e) {
+			departamento = null;
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	return departamentos;
+	}
