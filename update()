@@ -1,0 +1,35 @@
+@Override
+	public boolean update(Departamento entity) {
+		boolean flag = false;
+		try (Collection col = DatabaseManager.getCollection(
+				dataSource.getUrl() + dataSource.getColeccionDepartamentos(), dataSource.getUser(),
+				dataSource.getPwd())) {
+
+			XQueryService xqs = (XQueryService) col.getService("XQueryService", "1.0");
+			xqs.setProperty("indent", "yes");
+
+			String query = "update value //DEP_ROW[DEPT_NO='"+entity.getDeptno()+ " ']/DNOMBRE with' "+entity.getDname()+"'";
+
+			CompiledExpression compiled = xqs.compile(query);
+
+			ResourceSet result = xqs.execute(compiled);
+			
+			String query2 = "update value //DEP_ROW[DEPT_NO='"+entity.getDeptno()+ " ']//LOC with' "+entity.getLoc()+"'";
+			CompiledExpression compiled2 = xqs.compile(query2);
+			ResourceSet result2 = xqs.execute(compiled2);
+			
+			flag = true;
+/*
+			if (result.getSize() == 0) {
+				// throw new InstanceNotFoundException(id, Departamento.class.getName());
+			} else {
+				flag = true;
+			}
+			*/
+		} catch (XMLDBException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return flag;
+		
+	}
