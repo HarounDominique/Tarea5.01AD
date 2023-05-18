@@ -1,0 +1,20 @@
+@Override
+	public boolean create(Departamento dept) throws DuplicateInstanceException {
+		
+		Departamento departamento = null;
+		boolean flag = false;
+		
+		try {
+			departamento = departamentoDao.read(dept.getDeptno());
+		}catch(InstanceNotFoundException ex) {
+			ex.printStackTrace();
+		}
+		
+		if(departamento == null) {
+			flag = departamentoDao.create(dept);
+		}else {
+			throw new DuplicateInstanceException("ERROR: Departamento duplicado", departamento.getDeptno(), "Departamento");
+		}
+		
+			return flag;
+	}
