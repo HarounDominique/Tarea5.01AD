@@ -1,9 +1,13 @@
-@Override
+	@Override
 	public boolean delete(Departamento entity) {
 		
-		String xmlDept = toXMLString(entity);
-		System.out.println(xmlDept);
-		
+		boolean flag= false;
+		int deptnoToDelete = entity.getDeptno();
+
+		// String xmlDept = toXMLString(entity);//convertimos la entidad por parámetro
+		// de clase documento a xml
+		// System.out.println(xmlDept);
+
 		try (Collection col = DatabaseManager.getCollection(
 				dataSource.getUrl() + dataSource.getColeccionDepartamentos(), dataSource.getUser(),
 				dataSource.getPwd())) {
@@ -11,46 +15,21 @@
 			XQueryService xqs = (XQueryService) col.getService("XQueryService", "1.0");
 			xqs.setProperty("indent", "yes");
 
-			CompiledExpression compiled = xqs
-					.compile("for $dept in doc(\"departamentos.xml\")//DEP_ROW return $dept");
+			String query = "declare variable $id as xs:int external; " + "/departamentos/DEP_ROW[DEPT_NO = $id]";
+
+			CompiledExpression compiled = xqs.compile(query);
+			xqs.declareVariable("id", deptnoToDelete); // Asignar el valor de la variable
+
 			ResourceSet dept = xqs.execute(compiled);
-			
-			if (dept.getSize() == 0)
-				//throw new InstanceNotFoundException(id, Departamento.class.getName());
-				
-				System.out.println("La lista está vacía");
 
-			ResourceIterator i = dept.getIterator();
-			Resource res = null;
-			while (i.hasMoreResources()) {
-				try {
-					/*
-					res = i.nextResource();
-					String nodeString = res.getContent().toString();
-					departamento = stringNodeToDepartamento(nodeString);
-	                departamentos.add(departamento);
-	                */
-
-				} finally {
-					// dont forget to cleanup resources
-					try {
-						((EXistResource) res).freeResources();
-					} catch (XMLDBException xe) {
-						/*
-						departamento = null;
-						xe.printStackTrace();
-						*/
-					}
-				}
+			if (dept.getSize() == 0) {
+				// throw new InstanceNotFoundException(id, Departamento.class.getName());
+			} else {
+				flag = true;
 			}
-
 		} catch (XMLDBException e) {
-			/*
-			departamento = null;
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			*/
 		}
-		
-		return false;
+		return flag;
 	}
